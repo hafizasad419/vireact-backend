@@ -1,9 +1,23 @@
 import { Admin } from "../model/admin.model.js";
-import { FRONTEND_URL, RESEND_API_KEY } from "../config/index.js";
-import { Resend } from "resend";
+import { FRONTEND_URL, ACCESS_TOKEN_SECRET } from "../config/index.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../model/user.model.js";
 import crypto from "crypto"
+import resend from "../lib/resend.js";
+import { OAUTH_PROVIDERS } from "../constants.js";
+import jwt from "jsonwebtoken";
+
+// Helper function to get user-friendly provider names
+const getProviderDisplayName = (provider) => {
+    switch (provider) {
+        case OAUTH_PROVIDERS.GOOGLE:
+            return 'Google';
+        case OAUTH_PROVIDERS.LOCAL:
+            return 'email/password';
+        default:
+            return provider;
+    }
+};
 
 
 export const generateAccessToken = async (
@@ -19,9 +33,13 @@ export const generateAccessToken = async (
         }
 
         const accessToken = user.generateAccessToken();
+        const refreshToken = user.generateRefreshToken();
+        
+        // Store refresh token in database
+        user.refreshToken = refreshToken;
         await user.save({ validateBeforeSave: false });
 
-        return { accessToken };
+        return { accessToken, refreshToken };
     } catch (error) {
         throw new ApiError(500, error?.message || `Something went wrong on server, while generating access token for ${userType}.`);
     }
@@ -90,9 +108,15 @@ export const customSignupUserService = async (
     try {
         const existingUser = await User.findOne({ email });
         if (existingUser) {
-            throw new ApiError(409, "User already exists.");
+            // Check if user exists with a different provider
+            if (existingUser.provider !== provider) {
+                const existingProviderName = getProviderDisplayName(existingUser.provider);
+                throw new ApiError(409, `This email is already registered via ${existingProviderName}. Please log in with ${existingProviderName} instead.`);
+            } else {
+                throw new ApiError(409, "An account with this email already exists. Please log in instead.");
+            }
         }
-        const requireVerification = false;
+        const requireVerification = true;
 
         let token = null;
         let isEmailVerified = false;
@@ -117,8 +141,6 @@ export const customSignupUserService = async (
         if (requireVerification) {
             const verificationUrl = `${FRONTEND_URL}/verify-email?token=${token}`;
 
-            const resend = new Resend(RESEND_API_KEY);
-
             await resend.emails.send({
                 from: 'onboarding@resend.dev',
                 to: email,
@@ -133,7 +155,7 @@ export const customSignupUserService = async (
         return savedUser;
 
     } catch (error) {
-        throw new ApiError(500, error.message || "Failed to create user.");
+        throw new ApiError(500, error?.message || "Failed to create user.");
     }
 };
 
@@ -161,7 +183,7 @@ export const verifyEmailService = async (token) => {
             message: "Email verified successfully.",
         };
     } catch (error) {
-        throw new ApiError(500, error.message || "Failed to verify email.");
+        throw new ApiError(500, error?.message || "Failed to verify email.");
     }
 };
 
@@ -176,11 +198,11 @@ export const resendEmailVerificationService = async (email) => {
         const user = await User.findOne({ email });
 
         if (!user) {
-            throw new Error("User not found.");
+            throw new ApiError(400, "User not found.");
         }
 
         if (user.isEmailVerified) {
-            throw new Error("Email is already verified.");
+            throw new ApiError(400, "Email is already verified.");
         }
 
         const newToken = crypto.randomBytes(32).toString("hex");
@@ -188,8 +210,6 @@ export const resendEmailVerificationService = async (email) => {
         await user.save({ validateBeforeSave: false });
 
         const verificationUrl = `${FRONTEND_URL}/verify-email?token=${newToken}`;
-
-        const resend = new Resend(RESEND_API_KEY);
 
         await resend.emails.send({
             from: "onboarding@resend.dev",
@@ -208,7 +228,7 @@ export const resendEmailVerificationService = async (email) => {
         };
 
     } catch (error) {
-        throw new Error(error.message || "Failed to resend verification email.");
+        throw new ApiError(500, error.message || "Failed to resend verification email.");
     }
 };
 
@@ -232,18 +252,64 @@ export const loginUserService = async (email, password) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-        throw new Error("User Not Found");
+        throw new ApiError(400, "User Not Found");
+    }
+
+    // Check if user is trying to login with password but account was created with OAuth
+    if (user.provider !== OAUTH_PROVIDERS.LOCAL) {
+        const providerName = getProviderDisplayName(user.provider);
+        throw new ApiError(400, `This email is already registered via ${providerName}. Please log in with ${providerName} instead.`);
     }
 
     if (!user.isEmailVerified) {
-        throw new Error("Please verify your email first.");
+        throw new ApiError(400, "Please verify your email first.");
     }
 
     const isPasswordValid = await user.comparePassword(password);
 
     if (!isPasswordValid) {
-        throw new Error("Invalid Password");
+        throw new ApiError(400, "Invalid Password");
     }
 
     return user;
+};
+
+export const refreshTokenService = async (refreshToken) => {
+    try {
+        if (!refreshToken) {
+            throw new ApiError(401, "Refresh token is required");
+        }
+
+        // Verify the refresh token
+        const decoded = jwt.verify(refreshToken, ACCESS_TOKEN_SECRET);
+        
+        // Find user by ID from token
+        const user = await User.findById(decoded._id);
+        
+        if (!user) {
+            throw new ApiError(401, "Invalid refresh token - user not found");
+        }
+
+        // Check if the stored refresh token matches
+        if (user.refreshToken !== refreshToken) {
+            throw new ApiError(401, "Invalid refresh token");
+        }
+
+        // Generate new tokens
+        const newAccessToken = user.generateAccessToken();
+        const newRefreshToken = user.generateRefreshToken();
+        
+        // Update refresh token in database
+        user.refreshToken = newRefreshToken;
+        await user.save({ validateBeforeSave: false });
+
+        return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+    } catch (error) {
+        if (error.name === 'JsonWebTokenError') {
+            throw new ApiError(401, 'Invalid refresh token');
+        } else if (error.name === 'TokenExpiredError') {
+            throw new ApiError(401, 'Refresh token expired');
+        }
+        throw new ApiError(500, error?.message || "Failed to refresh token");
+    }
 };

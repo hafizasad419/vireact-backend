@@ -37,7 +37,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
-// Session configuration
+// Session configuration (only used for OAuth handshake)
 app.use(session({
     secret: SESSION_SECRET,
     resave: false,
@@ -45,7 +45,7 @@ app.use(session({
     cookie: {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        maxAge: 10 * 60 * 1000 // 10 minutes (OAuth handshake only)
     }
 }));
 

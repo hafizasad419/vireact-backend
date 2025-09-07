@@ -78,10 +78,20 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 
 
 userSchema.methods.generateAccessToken = function () {
-
     const signOptions = {
-        // expiresIn: ACCESS_TOKEN_EXPIRY as string
         expiresIn: "7d"
+    };
+
+    return jwt.sign(
+        { _id: this._id, email: this.email },
+        ACCESS_TOKEN_SECRET,
+        signOptions
+    );
+};
+
+userSchema.methods.generateRefreshToken = function () {
+    const signOptions = {
+        expiresIn: "30d"
     };
 
     return jwt.sign(
@@ -129,14 +139,22 @@ userSchema.statics.findOrCreateByGoogleProfile = async function (googleProfile) 
     user = await this.findOne({ email });
 
     if (user) {
-        // Link Google account to existing user
-        user.googleId = googleId;
-        user.provider = OAUTH_PROVIDERS.GOOGLE;
-        user.isEmailVerified = true; // Google emails are verified
-        if (photos && photos[0]) {
-            user.avatar = photos[0].value;
+        // Check if user exists with a different provider
+        if (user.provider !== OAUTH_PROVIDERS.GOOGLE) {
+            // Don't auto-link providers - this is a security risk
+            // Instead, we'll handle this in the OAuth callback with proper error messaging
+            throw new Error(`ACCOUNT_EXISTS_WITH_DIFFERENT_PROVIDER:${user.provider}`);
         }
-        await user.save();
+        
+        // User already has Google account linked, just update the Google ID if needed
+        if (!user.googleId) {
+            user.googleId = googleId;
+            user.isEmailVerified = true; // Google emails are verified
+            if (photos && photos[0]) {
+                user.avatar = photos[0].value;
+            }
+            await user.save();
+        }
         return user;
     }
 

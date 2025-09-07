@@ -18,31 +18,9 @@ passport.use(new GoogleStrategy({
             return done(new Error('Email is required for Google OAuth'), null);
         }
 
-        // Try to find existing user by Google ID first
-        let user = await User.findByGoogleId(googleId);
-
-        if (user) {
-            return done(null, user);
-        }
-
-        // Try to find existing user by email
-        user = await User.findOne({ email });
-
-        if (user) {
-            // Link Google account to existing user
-            user.googleId = googleId;
-            user.provider = OAUTH_PROVIDERS.GOOGLE;
-            user.isEmailVerified = true; // Google emails are verified
-            if (photos && photos[0]) {
-                user.avatar = photos[0].value;
-            }
-            await user.save();
-            return done(null, user);
-        }
-
-        // Create new user
-        const newUser = await User.findOrCreateByGoogleProfile(profile);
-        return done(null, newUser);
+        // Use the centralized method that handles provider conflicts
+        const user = await User.findOrCreateByGoogleProfile(profile);
+        return done(null, user);
 
     } catch (error) {
         return done(error, null);

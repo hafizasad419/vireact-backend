@@ -5,14 +5,28 @@ import {
     loginUserService,
     customSignupUserService,
     verifyEmailService,
-    resendEmailVerificationService
+    resendEmailVerificationService,
+    refreshTokenService
 } from "../service/auth.service.js";
 import { Admin } from "../model/admin.model.js";
 import { User } from "../model/user.model.js";
 import { COOKIE_OPTIONS, OAUTH_PROVIDERS, ROLES } from "../constants.js";
 import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 import passport from "../lib/passport.js";
 import { FRONTEND_URL } from "../config/index.js";
+
+// Helper function to get user-friendly provider names
+const getProviderDisplayName = (provider) => {
+    switch (provider) {
+        case OAUTH_PROVIDERS.GOOGLE:
+            return 'Google';
+        case OAUTH_PROVIDERS.LOCAL:
+            return 'email/password';
+        default:
+            return provider;
+    }
+};
 
 
 
@@ -38,11 +52,13 @@ export const signupUser = async (req, res, next) => {
             provider
         )
 
-        res.status(201).json({
-            success: true,
-            message: "User Created Successfully",
-            user
-        });
+        res.status(201).json(
+            ApiResponse.success(
+                201,
+                "User Created Successfully",
+                { user }
+            )
+        );
 
     } catch (error) {
         next(error)
@@ -61,19 +77,28 @@ export const loginUser = async (req, res, next) => {
 
         const user = await loginUserService(email, password);
 
-        const { accessToken } = await generateAccessToken(user._id, User, "User");
+        const { accessToken, refreshToken } = await generateAccessToken(user._id, User, "User");
 
         const loggedInUser = await User.findById(user._id).select("-password").lean()
 
         res.clearCookie("accessToken", COOKIE_OPTIONS)
+        res.clearCookie("refreshToken", COOKIE_OPTIONS)
 
         res.status(200)
             .cookie("accessToken", accessToken, COOKIE_OPTIONS)
-            .json({
-                message: "Login Successful",
-                user: loggedInUser,
-                accessToken
-            });
+            .cookie("refreshToken", refreshToken, { ...COOKIE_OPTIONS, maxAge: 30 * 24 * 60 * 60 * 1000 }) // 30 days
+            .json(
+                ApiResponse.success(
+                    200,
+                    "Login Successful",
+                    {
+                        user: loggedInUser,
+                        accessToken,
+                        refreshToken
+                    }
+                )
+            )
+
     }
     catch (error) {
         next(error)
@@ -109,7 +134,7 @@ export const loginAdmin = async (req, res, next) => {
         const { email, password } = req.body;
 
         const admin = await loginAdminService(email, password);
-        const { accessToken } = await generateAccessToken(admin._id, Admin, "Admin");
+        const { accessToken, refreshToken } = await generateAccessToken(admin._id, Admin, "Admin");
 
         const loggedInAdmin = await Admin
             .findById(admin._id)
@@ -117,13 +142,16 @@ export const loginAdmin = async (req, res, next) => {
             .lean()
 
         res.clearCookie("accessToken", COOKIE_OPTIONS)
+        res.clearCookie("refreshToken", COOKIE_OPTIONS)
 
         res.status(200)
             .cookie("accessToken", accessToken, COOKIE_OPTIONS)
+            .cookie("refreshToken", refreshToken, { ...COOKIE_OPTIONS, maxAge: 30 * 24 * 60 * 60 * 1000 }) // 30 days
             .json({
                 message: "Login Successful",
                 admin: loggedInAdmin,
-                accessToken
+                accessToken,
+                refreshToken
             });
     }
     catch (error) {
@@ -214,7 +242,10 @@ export const verifyEmail = async (req, res, next) => {
 export const logoutAdmin = async (req, res, next) => {
     try {
         res.clearCookie("accessToken", COOKIE_OPTIONS);
-        res.status(200).json({ message: "Admin Logout Successful" });
+        res.clearCookie("refreshToken", COOKIE_OPTIONS);
+        res.status(200).json(
+            ApiResponse.success(200, "Admin Logout Successful")
+        );
     } catch (error) {
         next(error)
     }
@@ -225,7 +256,10 @@ export const logoutAdmin = async (req, res, next) => {
 export const logoutUser = async (req, res, next) => {
     try {
         res.clearCookie("accessToken", COOKIE_OPTIONS);
-        res.status(200).json({ message: "User Logout Successful" });
+        res.clearCookie("refreshToken", COOKIE_OPTIONS);
+        res.status(200).json(
+            ApiResponse.success(200, "User Logout Successful")
+        );
     } catch (error) {
         next(error)
     }
@@ -257,7 +291,7 @@ export const googleAuth = (req, res, next) => {
         if (req.query.redirect) {
             req.session.redirectUrl = req.query.redirect;
         }
-        
+
         // Authenticate with Google
         passport.authenticate('google', {
             scope: ['profile', 'email']
@@ -271,6 +305,13 @@ export const googleCallback = async (req, res, next) => {
     try {
         passport.authenticate('google', async (err, user, info) => {
             if (err) {
+                // Handle provider conflict error
+                if (err.message && err.message.startsWith('ACCOUNT_EXISTS_WITH_DIFFERENT_PROVIDER:')) {
+                    const provider = err.message.split(':')[1];
+                    const providerName = getProviderDisplayName(provider);
+                    const errorMessage = `This email is already registered via ${providerName}. Please log in with ${providerName} instead.`;
+                    return res.redirect(`${FRONTEND_URL}/login?error=${encodeURIComponent(errorMessage)}`);
+                }
                 return res.redirect(`${FRONTEND_URL}/auth/error?message=${encodeURIComponent(err.message)}`);
             }
 
@@ -278,14 +319,15 @@ export const googleCallback = async (req, res, next) => {
                 return res.redirect(`${FRONTEND_URL}/auth/error?message=${encodeURIComponent('Authentication failed')}`);
             }
 
-            // Generate access token for the user
-            const { accessToken } = await generateAccessToken(user._id, User, "User");
+            // Generate access and refresh tokens for the user
+            const { accessToken, refreshToken } = await generateAccessToken(user._id, User, "User");
 
             // Get user without password
             const loggedInUser = await User.findById(user._id).select("-password").lean();
 
-            // Set cookie
+            // Set cookies
             res.cookie("accessToken", accessToken, COOKIE_OPTIONS);
+            res.cookie("refreshToken", refreshToken, { ...COOKIE_OPTIONS, maxAge: 30 * 24 * 60 * 60 * 1000 }); // 30 days
 
             // Redirect to frontend with success
             const redirectUrl = req.session.redirectUrl || `${FRONTEND_URL}/dashboard`;
@@ -294,7 +336,8 @@ export const googleCallback = async (req, res, next) => {
             // Redirect with user data as query params (for frontend to handle)
             const userData = encodeURIComponent(JSON.stringify({
                 user: loggedInUser,
-                accessToken
+                accessToken,
+                refreshToken
             }));
 
             res.redirect(`${redirectUrl}?auth=success&data=${userData}`);
@@ -306,4 +349,33 @@ export const googleCallback = async (req, res, next) => {
 
 export const googleAuthFailure = (req, res) => {
     res.redirect(`${FRONTEND_URL}/auth/error?message=${encodeURIComponent('Google authentication failed')}`);
+};
+
+// Refresh Token Controller
+export const refreshToken = async (req, res, next) => {
+    try {
+        const { refreshToken } = req.body;
+
+        if (!refreshToken) {
+            throw new ApiError(400, "Refresh token is required");
+        }
+
+        const { accessToken, refreshToken: newRefreshToken } = await refreshTokenService(refreshToken);
+
+        res.status(200)
+            .cookie("accessToken", accessToken, COOKIE_OPTIONS)
+            .cookie("refreshToken", newRefreshToken, { ...COOKIE_OPTIONS, maxAge: 30 * 24 * 60 * 60 * 1000 }) // 30 days
+            .json(
+                ApiResponse.success(
+                    200,
+                    "Token refreshed successfully",
+                    {
+                        accessToken,
+                        refreshToken: newRefreshToken
+                    }
+                )
+            );
+    } catch (error) {
+        next(error);
+    }
 };

@@ -8,7 +8,8 @@ import {
     resendEmailVerification,
     googleAuth,
     googleCallback,
-    googleAuthFailure
+    googleAuthFailure,
+    refreshToken
 } from '../controller/auth.controller.js';
 
 const authRoutes = Router();
@@ -17,6 +18,7 @@ const authRoutes = Router();
 authRoutes.post('/signup', signup);
 authRoutes.post('/login', login);
 authRoutes.post('/logout', logout);
+authRoutes.post('/refresh-token', refreshToken);
 authRoutes.post('/verify-email', verifyEmail);
 authRoutes.post('/resend-verification', resendEmailVerification);
 
