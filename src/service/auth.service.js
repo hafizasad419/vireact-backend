@@ -90,7 +90,7 @@ export const loginAdminService = async (email, password) => {
     const isPasswordValid = await admin.comparePassword(password);
 
     if (!isPasswordValid) {
-        throw new ApiError(401, "Invalid Password");
+        throw new ApiError(400, "Invalid Password");
     }
 
     return admin;
@@ -258,17 +258,17 @@ export const loginUserService = async (email, password) => {
     // Check if user is trying to login with password but account was created with OAuth
     if (user.provider !== OAUTH_PROVIDERS.LOCAL) {
         const providerName = getProviderDisplayName(user.provider);
-        throw new ApiError(400, `This email is already registered via ${providerName}. Please log in with ${providerName} instead.`);
+        throw new ApiError(409, `This email is already registered via ${providerName}. Please log in with ${providerName} instead.`);
     }
 
     if (!user.isEmailVerified) {
-        throw new ApiError(400, "Please verify your email first.");
+        throw new ApiError(401, "Please verify your email first.");
     }
 
     const isPasswordValid = await user.comparePassword(password);
 
     if (!isPasswordValid) {
-        throw new ApiError(400, "Invalid Password");
+        throw new ApiError(401, "Invalid Password");
     }
 
     return user;

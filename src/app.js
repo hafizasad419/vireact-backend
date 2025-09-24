@@ -5,11 +5,19 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import session from 'express-session';
+
+
 import passport from './lib/passport.js';
 import { ApiResponse } from './utils/ApiResponse.js';
-import authRoutes from './route/auth.route.js';
 import { errorHandler } from './middleware/errorHandler.js';
+
+
 import { FRONTEND_URL, SESSION_SECRET } from './config/index.js';
+import { EarlyAccess } from './model/early-access.model.js';
+
+// route imports
+import authRoutes from './route/auth.route.js';
+import earlyAccessRoutes from './route/early-access.route.js';
 
 const app = express();
 
@@ -18,6 +26,7 @@ app.use(helmet());
 app.use(cors({
     origin: [
         'http://localhost:5173',
+        'http://192.168.1.112:5173',
         FRONTEND_URL
     ],
     credentials: true,
@@ -63,8 +72,18 @@ app.get('/health', (req, res) => {
         );
 });
 
+app.get('/early-access-list', async (req, res) => {
+    const earlyAccessList = await EarlyAccess.find()
+    res.
+        status(200)
+        .json(
+            ApiResponse.success(200, 'Early access list', earlyAccessList)
+        );
+});
+
 // Routes
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/early-access', earlyAccessRoutes);
 
 // 404 handler
 app.use((req, res, next) => {
