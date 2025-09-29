@@ -15,8 +15,6 @@ const earlyAccessSchema = new mongoose.Schema({
     phone: {
         type: String,
         required: false,
-        unique: true,
-        sparse: true,
         trim: true
     },
     contentGoalNote: {
