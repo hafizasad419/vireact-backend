@@ -22,18 +22,23 @@ import earlyAccessRoutes from './route/early-access.route.js';
 const app = express();
 
 // Security
-app.use(helmet());
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginEmbedderPolicy: false
+}));
+
 app.use(cors({
     origin: [
-        'http://localhost:5173',
-        'http://192.168.1.112:5173',
-        "www.vireact.io",
         "https://vireact.io",
-        "vireact.io",
-        FRONTEND_URL
-    ],
+        "https://www.vireact.io",
+        "http://localhost:5173",
+        "http://192.168.1.112:5173"
+    ].filter(Boolean), // Remove any undefined values
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH']
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['Set-Cookie'],
+    maxAge: 86400 // 24 hours - cache preflight requests
 }));
 
 // Rate limiting (optional in dev)
