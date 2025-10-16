@@ -27,10 +27,13 @@ app.use(cors({
     origin: [
         'http://localhost:5173',
         'http://192.168.1.112:5173',
+        "www.vireact.io",
+        "https://vireact.io",
+        "vireact.io",
         FRONTEND_URL
     ],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS','PATCH']
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH']
 }));
 
 // Rate limiting (optional in dev)
