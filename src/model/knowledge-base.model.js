@@ -12,26 +12,20 @@ const KnowledgeBaseSchema = new mongoose.Schema({
   },
   metadata: {
     topic: {
-      type: String, // hook | caption | pacing | audio | flow | viral_predictor
+      type: String, // hook | caption | pacing | audio | advanced_analytics | views_predictor
       required: true,
+      enum: ['hook', 'caption', 'pacing', 'audio', 'advanced_analytics', 'views_predictor'],
       index: true,
     },
     layer: {
       type: String, // raw | pattern | example
+      enum: ['raw', 'pattern', 'example'],
       required: true,
       index: true,
     },
-    video_id: {
-      type: String, // Link to original Bas video (if available)
-      default: null,
-    },
-    views: {
-      type: Number, // View count (for re-ranking)
-      default: null,
-    },
     author: {
       type: String, // Usually "Bas", but flexible for future contributors
-      default: "Bas",
+      default: "Bas Costa",
     },
     date: {
       type: Date, // Date of content/insight creation
@@ -42,15 +36,13 @@ const KnowledgeBaseSchema = new mongoose.Schema({
       type: String, // transcript | breakdown | manual_note | trend_scrape
       default: "manual_note",
     },
-    tags: {
-      type: [String], // Extra filters like ["psychology", "storytelling"]
-      default: [],
-    },
-    confidence: {
+    score: {
       type: Number, // Optional score (0–1) for ranking certainty
-      default: null,
+      required: true,
+      min: 0.1,
+      max: 1,
     },
   },
 });
 
-export default mongoose.model("KnowledgeBase", KnowledgeBaseSchema);
+export const KnowledgeBase = mongoose.model("KnowledgeBase", KnowledgeBaseSchema);

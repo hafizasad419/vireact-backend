@@ -15,9 +15,30 @@ export const DB_NAME = process.env.DB_NAME;
 export const DB_PASSWORD = process.env.DB_PASSWORD;
 export const DB_URL = process.env.DB_URL;
 
-// Third Party API Keys
+// Third Party API & Keys
 export const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 export const RESEND_API_KEY = process.env.RESEND_API_KEY;
+export const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
+export const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
+export const AWS_S3_BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME;
+export const AWS_S3_REGION = process.env.AWS_S3_REGION;
+
+// Redis Configuration
+export const UPSTASH_REDIS_REST_URL = process.env.UPSTASH_REDIS_REST_URL;
+export const UPSTASH_REDIS_REST_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+// QStash
+export const QSTASH_URL = process.env.QSTASH_URL;
+export const QSTASH_TOKEN = process.env.QSTASH_TOKEN;
+export const QSTASH_CURRENT_SIGNING_KEY = process.env.QSTASH_CURRENT_SIGNING_KEY;
+export const QSTASH_NEXT_SIGNING_KEY = process.env.QSTASH_NEXT_SIGNING_KEY;
+
+// Twelve Labs API Key
+export const TWELVE_LABS_API_KEY = process.env.TWELVE_LABS_API_KEY;
+export const TWELVE_LABS_INDEX_ID = process.env.TWELVE_LABS_INDEX_ID;
+
+// MongoDB Vector Index for KnowledgeBase
+export const KNOWLEDGE_BASE_VECTOR_INDEX = process.env.KNOWLEDGE_BASE_VECTOR_INDEX
 
 // JWT Secret Key
 export const JWT_SECRET = process.env.JWT_SECRET;

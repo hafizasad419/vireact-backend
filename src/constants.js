@@ -1,3 +1,5 @@
+import { NODE_ENV } from "./config/index.js";
+
 export const ROLES = {
   ADMIN: "admin",
   SUPER_ADMIN: "super-admin",
@@ -13,7 +15,7 @@ export const OAUTH_PROVIDERS = {
 
 export const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
+  secure: NODE_ENV === 'production',
   maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
 };
 
@@ -21,6 +23,22 @@ export const COOKIE_OPTIONS = {
 export const MAX_RETRIES = 3;
 export const RETRY_DELAY = 1000; // Reduced for serverless cold starts
 export const CONNECTION_TIMEOUT = 3000; // Reduced timeout for serverless
+
+// VIDEO UPLOAD STATUS
+export const UPLOAD_STATUS = {
+  PENDING: 'pending',
+  UPLOADING: 'uploading',
+  COMPLETED: 'completed',
+  FAILED: 'failed'
+};
+
+// VIDEO ANALYSIS STATUS
+export const ANALYSIS_STATUS = {
+  PENDING: 'pending',
+  PROCESSING: 'processing',
+  COMPLETED: 'completed',
+  FAILED: 'failed'
+};
 
 
 

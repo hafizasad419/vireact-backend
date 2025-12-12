@@ -12,12 +12,14 @@ import { ApiResponse } from './utils/ApiResponse.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 
-import { FRONTEND_URL, SESSION_SECRET } from './config/index.js';
+import { FRONTEND_URL, NODE_ENV, SESSION_SECRET } from './config/index.js';
 import { EarlyAccess } from './model/early-access.model.js';
 
 // route imports
 import authRoutes from './route/auth.route.js';
 import earlyAccessRoutes from './route/early-access.route.js';
+import videoRoutes from './route/video.route.js';
+import chatRoutes from './route/chat.route.js';
 
 const app = express();
 
@@ -61,7 +63,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: process.env.NODE_ENV === 'production',
+        secure: NODE_ENV === 'production',
         httpOnly: true,
         maxAge: 10 * 60 * 1000 // 10 minutes (OAuth handshake only)
     }
@@ -93,6 +95,8 @@ app.get('/early-access-list', async (req, res) => {
 // Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/early-access', earlyAccessRoutes);
+app.use('/api/v1/videos', videoRoutes);
+app.use('/api/v1/chat', chatRoutes);
 
 // 404 handler
 app.use((req, res, next) => {

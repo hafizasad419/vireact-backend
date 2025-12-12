@@ -11,4 +11,5 @@ export const errorHandler = (err, req, res, next) => {
             ApiResponse.error(500, "Internal Server Error", null)
         );
     }
+    console.log(err);
 };
