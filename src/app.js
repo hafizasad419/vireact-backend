@@ -53,8 +53,20 @@ const limiter = rateLimit({
 });
 // app.use(limiter);
 
-// Logging & parsers
+// Logging
 app.use(morgan('dev'));
+
+// Stripe webhook route MUST come before express.json() to receive raw body
+// This is required for webhook signature verification
+app.post('/api/v1/subscription/webhook', 
+    express.raw({ type: 'application/json' }), 
+    async (req, res, next) => {
+        const { handleWebhook } = await import('./controller/subscription.controller.js');
+        return handleWebhook(req, res, next);
+    }
+);
+
+// Body parsers (applied after webhook route)
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());

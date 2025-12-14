@@ -4,7 +4,6 @@ import { authenticateToken } from '../middleware/auth.js';
 import {
     getSubscription,
     createCheckoutSession,
-    handleWebhook,
     cancelSubscription
 } from '../controller/subscription.controller.js';
 
@@ -16,8 +15,8 @@ router.get('/', authenticateToken, getSubscription);
 // Create Stripe checkout session
 router.post('/checkout', authenticateToken, createCheckoutSession);
 
-// Handle Stripe webhooks (no auth - Stripe sends these)
-router.post('/webhook', express.raw({ type: 'application/json' }), handleWebhook);
+// Note: Webhook route is handled directly in app.js before express.json() middleware
+// This is required for Stripe signature verification to work with raw body
 
 // Cancel subscription
 router.post('/cancel', authenticateToken, cancelSubscription);
