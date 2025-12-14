@@ -34,6 +34,8 @@ app.use(helmet({
 app.use(cors({
     origin: [
         "https://vireact.io",
+        'https://vireact-frontend.vercel.app',
+        'vireact-frontend.vercel.app',
         "https://www.vireact.io",
         "http://localhost:5173",
         "http://192.168.1.112:5173"
