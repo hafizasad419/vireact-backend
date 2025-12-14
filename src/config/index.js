@@ -54,3 +54,10 @@ export const SESSION_SECRET = process.env.SESSION_SECRET || JWT_SECRET;
 
 // Lambda check
 export const IS_LAMBDA = Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME);
+
+// Stripe Configuration
+export const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY;
+export const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
+export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
+export const STRIPE_PRICE_ID_STARTER = process.env.STRIPE_PRICE_ID_STARTER;
+export const STRIPE_PRICE_ID_PRO = process.env.STRIPE_PRICE_ID_PRO;

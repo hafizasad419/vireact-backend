@@ -20,6 +20,8 @@ import authRoutes from './route/auth.route.js';
 import earlyAccessRoutes from './route/early-access.route.js';
 import videoRoutes from './route/video.route.js';
 import chatRoutes from './route/chat.route.js';
+import profileRoutes from './route/profile.route.js';
+import subscriptionRoutes from './route/subscription.route.js';
 
 const app = express();
 
@@ -97,6 +99,8 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/early-access', earlyAccessRoutes);
 app.use('/api/v1/videos', videoRoutes);
 app.use('/api/v1/chat', chatRoutes);
+app.use('/api/v1/profile', profileRoutes);
+app.use('/api/v1/subscription', subscriptionRoutes);
 
 // 404 handler
 app.use((req, res, next) => {

@@ -247,7 +247,7 @@ export const deleteVideoService = async (videoId, userId) => {
         // Delete from S3
         // if (video.s3Key) {
         //     try {
-                await deleteFile(video.s3Key);
+                // await deleteFile(video.s3Key);
                 // awai(video.s3Key);
         //         console.log(`[Delete] Successfully deleted S3 file: ${video.s3Key}`);
         //     } catch (s3Error) {

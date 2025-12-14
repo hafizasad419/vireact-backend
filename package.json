@@ -48,6 +48,7 @@
     "passport-google-oauth20": "^2.0.0",
     "resend": "^4.6.0",
     "serverless-http": "^3.2.0",
+    "stripe": "^20.0.0",
     "twelvelabs-js": "^1.1.0",
     "uuid": "^11.1.0",
     "zod": "^3.25.76"

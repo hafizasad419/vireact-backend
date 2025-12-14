@@ -22,6 +22,7 @@ import { analyzeAudio } from '../service/analyzer/audio.analyzer.js';
 import { analyzeAdvancedAnalytics } from '../service/analyzer/advanced-analytics.analyzer.js';
 import { analyzeViewsPredictor } from '../service/analyzer/views-predictor.analyzer.js';
 import { requestChatCompletion } from '../service/openai-response.service.js';
+import { checkVideoLimit, incrementVideoUsage } from '../service/subscription.service.js';
 
 const receiver = new Receiver({
     currentSigningKey: QSTASH_CURRENT_SIGNING_KEY,
@@ -397,6 +398,13 @@ Only output structured scene-by-scene analysis.
             video.isAnalysisReady = true;
             await video.save();
 
+            // Increment video usage after successful analysis
+            try {
+                await incrementVideoUsage(userId);
+            } catch (usageError) {
+                console.error(`[QStash] Failed to increment video usage for user ${userId}:`, usageError.message);
+            }
+
             // Store initial analysis summary in chat as first message
             try {
                 // Reload video to get the updated analysis array
@@ -458,6 +466,9 @@ export const uploadVideoToTwelveLabs = async (req, res, next) => {
             throw new ApiError(400, 'Video file is required');
         }
 
+        // Check video upload limit before processing
+        await checkVideoLimit(userId);
+
         // Use original filename from multer if available, otherwise from body
         const filename = file.originalname || req.body.filename;
         const { selectedFeatures } = req.body;
@@ -501,6 +512,9 @@ export const uploadVideoUrlToTwelveLabs = async (req, res, next) => {
         if (!url || !filename) {
             throw new ApiError(400, 'URL and filename are required');
         }
+
+        // Check video upload limit before processing
+        await checkVideoLimit(userId);
 
         const selectedFeaturesArray = Array.isArray(selectedFeatures)
             ? selectedFeatures
@@ -826,15 +840,7 @@ function buildInitialAnalysisMessage(video) {
             
             if (analysis.rating) {
                 partsSummary.push(`Rating: ${analysis.rating}`);
-            }
-            if (analysis.feedback) {
-                // Truncate long feedback
-                const feedback = analysis.feedback.length > 80 
-                    ? analysis.feedback.substring(0, 77) + '...'
-                    : analysis.feedback;
-                partsSummary.push(feedback);
-            }
-            
+            }            
             if (partsSummary.length > 0) {
                 parts.push(`- ${label}: ${partsSummary.join(' — ')}`);
             }

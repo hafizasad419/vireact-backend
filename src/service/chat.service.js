@@ -4,6 +4,7 @@ import { ApiError } from '../utils/ApiError.js';
 import { ANALYSIS_STATUS } from '../constants.js';
 import { KNOWLEDGE_BASE_VECTOR_INDEX } from '../config/index.js';
 import { requestChatCompletion } from './openai-response.service.js';
+import { checkChatLimit, incrementChatUsage } from './subscription.service.js';
 
 export const getChatMessagesService = async (videoId, userId) => {
     if (!videoId || !userId) {
@@ -98,14 +99,6 @@ function buildInitialAnalysisMessage(video) {
             if (analysis.rating) {
                 partsSummary.push(`Rating: ${analysis.rating}`);
             }
-            if (analysis.feedback) {
-                // Truncate long feedback
-                const feedback = analysis.feedback.length > 80 
-                    ? analysis.feedback.substring(0, 77) + '...'
-                    : analysis.feedback;
-                partsSummary.push(feedback);
-            }
-            
             if (partsSummary.length > 0) {
                 parts.push(`- ${label}: ${partsSummary.join(' — ')}`);
             }
@@ -121,6 +114,9 @@ export const sendChatMessageService = async (videoId, userId, messageText) => {
     if (!videoId || !userId || !messageText) {
         throw new ApiError(400, 'Video ID, User ID, and message text are required');
     }
+
+    // Check chat message limit before processing
+    await checkChatLimit(userId);
 
     // Verify video belongs to user
     const video = await Video.findOne({ _id: videoId, uploader_id: userId });
@@ -162,6 +158,13 @@ export const sendChatMessageService = async (videoId, userId, messageText) => {
     chat.messages.push(aiMessage);
 
     await chat.save();
+
+    // Increment chat usage after AI response is generated
+    try {
+        await incrementChatUsage(userId);
+    } catch (usageError) {
+        console.error(`[Chat] Failed to increment chat usage for user ${userId}:`, usageError.message);
+    }
 
     return {
         userMessage,
