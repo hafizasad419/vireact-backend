@@ -787,68 +787,50 @@ function parseScenesFromAnalysis(analysisResult) {
 // Build initial analysis message for chat from video.analysis array
 function buildInitialAnalysisMessage(video) {
     const parts = [];
-    const sceneCount = video.scenes ? video.scenes.length : 0;
     const analysisArray = video.analysis || [];
 
-    parts.push("Video analysis complete.");
-    parts.push("");
-    parts.push("Summary:");
+    // Feature name mapping
+    const featureLabels = {
+        hook: 'Hook',
+        caption: 'Caption',
+        pacing: 'Pacing',
+        audio: 'Audio',
+        advanced_analytics: 'Advanced Analytics',
+        views_predictor: 'Views Predictor'
+    };
 
-    // Check what features were analyzed
-    const analyzedFeatures = analysisArray.map(a => a.feature);
-    const hasHook = analyzedFeatures.includes('hook');
-    
-    parts.push(
-        hasHook
-            ? "- Hook analysis completed."
-            : "- Hook analysis not available."
-    );
-    parts.push(
-        sceneCount > 0
-            ? `- Structure review: ${sceneCount} scene${sceneCount === 1 ? "" : "s"} detected.`
-            : "- Structure review: no scenes detected."
-    );
-
-    if (sceneCount > 0) {
+    // Process each analyzed feature
+    analysisArray.forEach((analysis, index) => {
+        const featureName = featureLabels[analysis.feature] || analysis.feature;
+        
+        // Add feature name
+        parts.push(featureName);
         parts.push("");
-        parts.push("Scene overview:");
-        video.scenes.slice(0, 5).forEach((scene) => {
-            parts.push(
-                `- Scene ${scene.sceneNumber}: ${scene.visualDescription || "No description"}`
-            );
-        });
-        if (sceneCount > 5) {
-            parts.push(`- ...${sceneCount - 5} additional scene${sceneCount - 5 === 1 ? "" : "s"}.`);
+        
+        // Add "What's wrong" section
+        parts.push("What's wrong:");
+        const feedback = analysis.feedback && analysis.feedback.trim() 
+            ? analysis.feedback 
+            : "No specific issues identified";
+        parts.push(feedback);
+        parts.push("");
+        
+        // Add "Suggestions to improve" section
+        parts.push("Suggestions to improve:");
+        if (analysis.suggestions && analysis.suggestions.length > 0) {
+            analysis.suggestions.forEach(suggestion => {
+                parts.push(`- ${suggestion}`);
+            });
+        } else {
+            parts.push("- No suggestions available");
         }
-    }
-
-    // Add analysis details if available
-    if (analysisArray.length > 0) {
-        parts.push("");
-        parts.push("Analysis details:");
-        analysisArray.forEach((analysis) => {
-            const featureLabels = {
-                hook: 'Hook',
-                caption: 'Caption',
-                pacing: 'Pacing',
-                audio: 'Audio',
-                advanced_analytics: 'Advanced analytics',
-                views_predictor: 'Views predictor'
-            };
-            const label = featureLabels[analysis.feature] || analysis.feature;
-            const partsSummary = [];
-            
-            if (analysis.rating) {
-                partsSummary.push(`Rating: ${analysis.rating}`);
-            }            
-            if (partsSummary.length > 0) {
-                parts.push(`- ${label}: ${partsSummary.join(' — ')}`);
-            }
-        });
-    }
-
-    parts.push("");
-    parts.push("Detailed insights follow below.");
+        
+        // Add spacing between features (except after the last one)
+        if (index < analysisArray.length - 1) {
+            parts.push("");
+            parts.push("");
+        }
+    });
 
     return parts.join('\n');
 }

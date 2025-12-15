@@ -47,36 +47,40 @@ export const analyzeAdvancedAnalytics = async (scenes) => {
         return `Scene ${idx + 1}: ${(scene.endTime - scene.startTime).toFixed(1)}s | Purpose: ${scene.purpose || 'N/A'} | Tone: ${scene.emotionalTone || 'N/A'}`;
     }).join('\n');
 
-    // TODO: Uncomment when knowledge base is seeded with advanced analytics data
     // Generate embedding for advanced analytics
-    // const embeddingResponse = await openai.embeddings.create({
-    //     model: "text-embedding-3-large",
-    //     input: scenesSummary
-    // });
-    // const analyticsEmbedding = embeddingResponse.data[0].embedding;
+    const embeddingResponse = await openai.embeddings.create({
+        model: "text-embedding-3-large",
+        input: scenesSummary
+    });
+    const analyticsEmbedding = embeddingResponse.data[0].embedding;
 
     // Perform vector search to find relevant knowledge base documents
-    // const relevantData = await KnowledgeBase.aggregate([
-    //     {
-    //         $vectorSearch: {
-    //             index: KNOWLEDGE_BASE_VECTOR_INDEX,
-    //             queryVector: analyticsEmbedding,
-    //             path: "embedding",
-    //             filter: { "metadata.topic": "advanced_analytics" },
-    //             limit: 10,
-    //             numCandidates: 100
-    //         }
-    //     }
-    // ]);
+    const relevantData = await KnowledgeBase.aggregate([
+        {
+            $vectorSearch: {
+                index: KNOWLEDGE_BASE_VECTOR_INDEX,
+                queryVector: analyticsEmbedding,
+                path: "embedding",
+                filter: { "metadata.topic": "advanced_analytics" },
+                limit: 10,
+                numCandidates: 100
+            }
+        }
+    ]);
 
     // Format relevant knowledge base context
-    // const ragContext = relevantData.length > 0
-    //     ? relevantData
-    //         .map((c, i) => `${i + 1}. [${c.metadata.layer.toUpperCase()}] ${c.content}`)
-    //         .join("\n")
-    //     : 'No specific knowledge base documents found';
+    const ragContext = relevantData.length > 0
+        ? relevantData
+            .map((c, i) => `${i + 1}. [${c.metadata.layer.toUpperCase()}] ${c.content}`)
+            .join("\n")
+        : 'No specific knowledge base documents found';
 
     const prompt = `
+You are an expert psychological content reviewer trained on Bas's mindset and advanced analytics principles. Bas has 1M+ subscribers on YouTube and has a 99.9% engagement rate.
+
+BAS'S ADVANCED ANALYTICS INSIGHTS AND EXAMPLES:
+${ragContext}
+
 Analyze this short-form social media video using advanced analytics metrics.
 
 VIDEO METRICS:

@@ -54,7 +54,7 @@ export const analyzeHook = async (hook, scenes) => {
         : 'No relevant knowledge base documents found';
 
     const prompt = `
-You are an expert psychological content reviewer trained on Bas's mindset and hook analysis principles.
+You are an expert psychological content reviewer trained on Bas's mindset and hook analysis principles. Bas has 1M+ subscribers on YouTube and has a 99.9% engagement rate.
 
 BAS'S HOOK INSIGHTS AND EXAMPLES:
 ${ragContext}
