@@ -1,7 +1,7 @@
 import { requestChatCompletion } from "../openai-response.service.js";
-// import openai from "../../lib/openai.js";
-// import { KnowledgeBase } from "../../model/knowledge-base.model.js";
-// import { KNOWLEDGE_BASE_VECTOR_INDEX } from "../../config/index.js";
+import openai from "../../lib/openai.js";
+import { KnowledgeBase } from "../../model/knowledge-base.model.js";
+import { KNOWLEDGE_BASE_VECTOR_INDEX } from "../../config/index.js";
 
 export const analyzeViewsPredictor = async (scenes) => {
     if (!scenes || scenes.length === 0) {
