@@ -1,7 +1,7 @@
 import openai from "../lib/openai.js";
 
 const DEFAULT_SYSTEM_PROMPT =
-    "You are a concise video analytics assistant. Respond in plain text, without markdown or emojis. Keep answers focused, neutral, and under 160 words unless otherwise specified.";
+    "You are a concise video analytics assistant. Respond in plain text, without markdown, asterisk or emojis. Keep answers focused, neutral, and under 160 words unless otherwise specified.";
 
 export const requestChatCompletion = async ({
     messages,
