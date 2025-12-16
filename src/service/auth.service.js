@@ -142,12 +142,16 @@ export const customSignupUserService = async (
             const verificationUrl = `${FRONTEND_URL}/verify-email?token=${token}`;
 
             await resend.emails.send({
-                from: 'onboarding@resend.dev',
+                from: 'support@vireact.io',
                 to: email,
                 subject: 'Verify Your Email',
                 html: `<div>
-                        <p>Welcome to our platform!</p>
-                        <p>Click <a href="${verificationUrl}">here</a> to verify your email.</p>
+                        <p>Hey ${name}, Welcome to Vireact</p>
+                        <p>Please <a href="${verificationUrl}">click here</a> to verify your email.</p>
+                        <p>If you didn't request this verification, please ignore this email.</p>
+                        <p>Thank you for using Vireact!</p>
+                        <p>Best regards,</p>
+                        <p>The Vireact Team</p>
                        </div>`
             });
         }
@@ -212,7 +216,7 @@ export const resendEmailVerificationService = async (email) => {
         const verificationUrl = `${FRONTEND_URL}/verify-email?token=${newToken}`;
 
         await resend.emails.send({
-            from: "onboarding@resend.dev",
+            from: "support@vireact.io",
             to: user.email,
             subject: "Verify your email",
             html: `
