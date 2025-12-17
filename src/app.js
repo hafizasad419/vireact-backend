@@ -89,6 +89,9 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Handle preflight requests explicitly
+app.options('*', cors());
+
 // Health check
 app.get('/health', (req, res) => {
     res.

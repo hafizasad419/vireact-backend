@@ -30,6 +30,16 @@ const upload = multer({
     }
 });
 
-// Middleware for single file upload
-export const uploadSingle = upload.single('file');
+// Middleware wrapper for single file upload with error handling
+export const uploadSingle = (req, res, next) => {
+    upload.single('file')(req, res, (err) => {
+        if (err) {
+            // Multer error occurred - pass to error handler
+            // The error handler will set proper CORS headers
+            return next(err);
+        }
+        // No error, continue to next middleware
+        next();
+    });
+};
 
