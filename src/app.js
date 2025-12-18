@@ -34,8 +34,7 @@ app.use(helmet({
 app.use(cors({
     origin: [
         "https://vireact.io",
-        'https://vireact-frontend.vercel.app',
-        'vireact-frontend.vercel.app',
+        'https://vireact-frontend.vercel.app',      ,
         "https://www.vireact.io",
         "http://localhost:5173",
         "http://192.168.1.112:5173"
@@ -74,6 +73,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // Session configuration (only used for OAuth handshake)
+// Note: MemoryStore warning is expected and acceptable for short-lived OAuth sessions in serverless environments
 app.use(session({
     secret: SESSION_SECRET,
     resave: false,
@@ -88,9 +88,6 @@ app.use(session({
 // Passport middleware
 app.use(passport.initialize());
 app.use(passport.session());
-
-// Handle preflight requests explicitly
-app.options('*', cors());
 
 // Health check
 app.get('/health', (req, res) => {
