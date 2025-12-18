@@ -16,6 +16,7 @@ export const OAUTH_PROVIDERS = {
 export const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: NODE_ENV === 'production',
+  sameSite: NODE_ENV === 'production' ? 'none' : 'lax',
   maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
 };
 

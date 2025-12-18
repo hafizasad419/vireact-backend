@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import session from 'express-session';
+import MongoStore from 'connect-mongo';
 
 
 import passport from './lib/passport.js';
@@ -12,7 +13,7 @@ import { ApiResponse } from './utils/ApiResponse.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 
-import { FRONTEND_URL, NODE_ENV, SESSION_SECRET } from './config/index.js';
+import { FRONTEND_URL, NODE_ENV, SESSION_SECRET,DB_URL } from './config/index.js';
 import { EarlyAccess } from './model/early-access.model.js';
 
 // route imports
@@ -73,14 +74,21 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // Session configuration (only used for OAuth handshake)
-// Note: MemoryStore warning is expected and acceptable for short-lived OAuth sessions in serverless environments
 app.use(session({
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
+    store: MongoStore.create({
+        mongoUrl: DB_URL,
+        touchAfter: 24 * 3600, // Lazy update (24 hours)
+        crypto: {
+            secret: SESSION_SECRET
+        }
+    }),
     cookie: {
         secure: NODE_ENV === 'production',
         httpOnly: true,
+        sameSite: NODE_ENV === 'production' ? 'none' : 'lax',
         maxAge: 10 * 60 * 1000 // 10 minutes (OAuth handshake only)
     }
 }));

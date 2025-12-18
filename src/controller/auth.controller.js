@@ -330,7 +330,7 @@ export const googleCallback = async (req, res, next) => {
             res.cookie("refreshToken", refreshToken, { ...COOKIE_OPTIONS, maxAge: 30 * 24 * 60 * 60 * 1000 }); // 30 days
 
             // Redirect to frontend with success
-            const redirectUrl = req.session.redirectUrl || `${FRONTEND_URL}/dashboard`;
+            const redirectUrl = req.session.redirectUrl || `${FRONTEND_URL}/auth/google/callback`;
             delete req.session.redirectUrl; // Clean up session
 
             // Redirect with user data as query params (for frontend to handle)
