@@ -25,12 +25,22 @@ const upload = multer({
 
 // Middleware wrapper for single file upload with error handling
 export const uploadSingle = (req, res, next) => {
+    console.log(`[Multer] Starting file upload - Method: ${req.method}, Content-Type: ${req.headers['content-type']}, Content-Length: ${req.headers['content-length']}`);
+    
     upload.single('file')(req, res, (err) => {
         if (err) {
+            console.error(`[Multer] Error: ${err.message}, Code: ${err.code}`);
             // Multer error occurred - pass to error handler
             // The error handler will set proper CORS headers
             return next(err);
         }
+        
+        if (req.file) {
+            console.log(`[Multer] File received - Name: ${req.file.originalname}, Size: ${req.file.size}, MimeType: ${req.file.mimetype}`);
+        } else {
+            console.warn('[Multer] No file received in request');
+        }
+        
         // No error, continue to next middleware
         next();
     });
