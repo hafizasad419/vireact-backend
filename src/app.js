@@ -35,7 +35,7 @@ app.use(helmet({
 app.use(cors({
     origin: [
         "https://vireact.io",
-        'https://vireact-frontend.vercel.app',      ,
+        'https://vireact-frontend.vercel.app',
         "https://www.vireact.io",
         "http://localhost:5173",
         "http://192.168.1.112:5173"
@@ -124,8 +124,24 @@ app.use('/api/v1/chat', chatRoutes);
 app.use('/api/v1/profile', profileRoutes);
 app.use('/api/v1/subscription', subscriptionRoutes);
 
-// 404 handler
+// 404 handler with CORS headers
 app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    const allowedOrigins = [
+        "https://vireact.io",
+        "https://vireact-frontend.vercel.app",
+        "https://www.vireact.io",
+        "http://localhost:5173",
+        "http://192.168.1.112:5173"
+    ];
+
+    if (origin && allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    }
+
     res.
         status(404)
         .json(ApiResponse
