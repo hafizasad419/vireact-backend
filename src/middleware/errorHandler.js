@@ -29,7 +29,7 @@ export const errorHandler = (err, req, res, next) => {
         // Handle multer errors with specific messages
         if (err.code === 'LIMIT_FILE_SIZE') {
             res.status(413).json(
-                ApiResponse.error(413, "File size exceeds the maximum limit of 15MB", null)
+                ApiResponse.error(413, "File size exceeds the maximum limit of 100MB", null)
             );
         } else if (err.message && err.message.includes('Invalid file type')) {
             res.status(400).json(
