@@ -257,6 +257,12 @@ Scene Number: [number]
 - Emotional Tone: [tone, e.g., excitement, tension, humor]
 - Purpose of the Scene: [hook, buildup, reveal, CTA, filler]
 
+IMPORTANT AUDIO INSTRUCTIONS:
+- Audio/Speech Summary MUST include ALL audio elements: spoken dialogue, voiceover narration, background music, sound effects, and any other audio
+- If there is on-screen text/captions, it often represents what is being spoken - include this spoken content in the Audio/Speech Summary
+- Describe background music, sound effects, or any ambient audio present
+- Only use "None" if there is truly no audio at all in the scene
+
 Focus on fast cuts, transitions, camera changes, text overlays, and beat changes typical of reels/shorts.
 Be concise but precise. Ignore general feedback and do NOT summarize the whole video.
 Only output structured scene-by-scene analysis.
@@ -584,6 +590,11 @@ async function parseScenesWithOpenAI(analysisResult) {
 - emotionalTone (string, or empty string if not provided)
 - purpose (string, or empty string if not provided)
 
+IMPORTANT: For audioSummary field:
+- Include ALL audio elements: spoken dialogue, voiceover narration, background music, sound effects
+- If on-screen text/captions are present, they often represent spoken words - include this in audioSummary when the source text indicates speech
+- Only use empty string if there is truly no audio at all in the scene
+
 Input text:
 ${text}
 
@@ -595,7 +606,7 @@ Return ONLY a valid JSON array of scenes, no other text. Example format:
     "endTime": 5,
     "visualDescription": "A man in a red hoodie...",
     "onScreenText": "",
-    "audioSummary": "Background music",
+    "audioSummary": "Background music with spoken dialogue",
     "primaryAction": "Offers money",
     "emotionalTone": "humor",
     "purpose": "hook"

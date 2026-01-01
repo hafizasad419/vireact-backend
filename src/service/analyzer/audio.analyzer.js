@@ -9,7 +9,7 @@ export const analyzeAudio = async (scenes) => {
     }
 
     // Extract all audio information from scenes
-    const audioContexts = scenes
+    let audioContexts = scenes
         .map((scene, idx) => {
             const audio = scene.audioSummary || '';
             if (!audio || audio.trim() === '' || audio.toLowerCase() === 'none' || audio.toLowerCase() === 'n/a') {
@@ -18,6 +18,24 @@ export const analyzeAudio = async (scenes) => {
             return `Scene ${idx + 1} (${scene.startTime}s-${scene.endTime}s): ${audio}`;
         })
         .filter(Boolean);
+
+    // Fallback: If no audio summaries found, check onScreenText (captions indicate spoken audio)
+    if (audioContexts.length === 0) {
+        const captionContexts = scenes
+            .map((scene, idx) => {
+                const text = scene.onScreenText || '';
+                if (text && text.trim() !== '' && text.toLowerCase() !== 'none' && text.toLowerCase() !== 'n/a') {
+                    return `Scene ${idx + 1} (${scene.startTime}s-${scene.endTime}s): "${text}" (spoken dialogue/captions)`;
+                }
+                return null;
+            })
+            .filter(Boolean);
+
+        if (captionContexts.length > 0) {
+            // Captions exist, infer speech audio is present
+            audioContexts = captionContexts;
+        }
+    }
 
     // Count scenes with and without audio
     const scenesWithAudio = audioContexts.length;
